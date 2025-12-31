@@ -155,3 +155,22 @@ If your plugin needs Azure helpers, depend on the optional extra:
 ```toml
 dependencies = ["firm-ai[azure]>=0.0.3"]
 ```
+
+## Testing
+
+Run the unit tests (uses stdlib `unittest`):
+
+```bash
+python -m unittest discover -s tests
+```
+
+Optional: add coverage to CI (example GitHub Actions steps):
+
+```yaml
+- name: Install coverage
+  run: python -m pip install --upgrade coverage
+- name: Run tests with coverage
+  run: |
+    coverage run -m unittest discover -s tests
+    coverage report -m
+```
