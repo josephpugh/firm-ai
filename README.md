@@ -8,6 +8,14 @@ A stable wrapper CLI that discovers and runs tools published as separate Python 
 pipx install -e .
 ```
 
+Install directly from GitHub:
+
+```bash
+pipx install git+https://github.com/josephpugh/firm-ai@v0.0.2
+```
+
+If you omit the tag, pipx installs the default branch (usually `main`), not the latest tag.
+
 To include Azure OpenAI helpers:
 
 ```bash
@@ -19,6 +27,8 @@ pipx install -e ".[azure]"
 ```bash
 firm-ai list
 firm-ai run <tool> -- <tool-args>
+firm-ai install <repo/url>
+firm-ai uninstall <tool-or-package>
 ```
 
 If a tool does not need `--`, you can omit it. Any remaining arguments are passed to the tool.
@@ -29,6 +39,12 @@ Tools are separate repos/packages. Install them into the same environment as the
 
 ```bash
 pipx inject firm-ai git+https://github.example.com/org/firm-ai-hello
+```
+
+You can also use the wrapper shortcut:
+
+```bash
+firm-ai install git+https://github.example.com/org/firm-ai-hello
 ```
 
 You can also use a venv and `pip install git+...`.
