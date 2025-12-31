@@ -1,0 +1,30 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "firm-ai"
+version = "0.0.1"
+description = "Wrapper CLI for Firm AI tools with entry point plugins."
+readme = "README.md"
+requires-python = ">=3.9"
+license = { text = "Proprietary" }
+authors = [{ name = "Firm AI" }]
+classifiers = [
+  "Programming Language :: Python :: 3",
+]
+
+[project.optional-dependencies]
+azure = [
+  "azure-identity>=1.15.0",
+  "openai>=1.0.0",
+]
+
+[project.scripts]
+firm-ai = "firm_ai.cli:main"
+
+[tool.setuptools]
+package-dir = {"" = "src"}
+
+[tool.setuptools.packages.find]
+where = ["src"]

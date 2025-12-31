@@ -1,0 +1,2 @@
+[console_scripts]
+firm-ai = firm_ai.cli:main
