@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "firm-ai"
-version = "0.0.1"
+version = "0.0.2"
 description = "Wrapper CLI for Firm AI tools with entry point plugins."
 readme = "README.md"
 requires-python = ">=3.9"

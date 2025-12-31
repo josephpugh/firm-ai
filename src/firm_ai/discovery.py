@@ -3,8 +3,8 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from importlib.metadata import EntryPoint, entry_points
-from typing import Dict, Iterable, Tuple
+from importlib.metadata import EntryPoint, entry_points, distributions
+from typing import Dict, Iterable, Optional, Tuple
 
 from firm_ai.plugin import Tool
 
@@ -41,6 +41,13 @@ def _select_entry_points() -> Iterable[EntryPoint]:
     return eps.get(ENTRYPOINT_GROUP, [])
 
 
+def _iter_entry_points_with_dist() -> Iterable[Tuple[EntryPoint, object]]:
+    for dist in distributions():
+        for ep in dist.entry_points:
+            if ep.group == ENTRYPOINT_GROUP:
+                yield ep, dist
+
+
 def load_tools() -> Tuple[Dict[str, Tool], Tuple[ToolLoadError, ...]]:
     tools: Dict[str, Tool] = {}
     errors = []
@@ -63,3 +70,25 @@ def load_tools() -> Tuple[Dict[str, Tool], Tuple[ToolLoadError, ...]]:
 
 def iter_entry_points() -> Iterable[EntryPoint]:
     return _select_entry_points()
+
+
+def resolve_tool_distribution(tool_name: str) -> Tuple[Optional[str], Tuple[ToolLoadError, ...]]:
+    errors = []
+    for ep, dist in _iter_entry_points_with_dist():
+        try:
+            tool = _resolve_tool(ep)
+            if tool.name != tool_name:
+                continue
+            dist_name = getattr(dist, "name", None)
+            if not dist_name:
+                dist_name = dist.metadata.get("Name")
+            return dist_name, tuple(errors)
+        except Exception as exc:
+            errors.append(
+                ToolLoadError(
+                    name=ep.name,
+                    entry_point=str(ep),
+                    error=str(exc),
+                )
+            )
+    return None, tuple(errors)
