@@ -29,6 +29,8 @@ firm-ai list
 firm-ai run <tool> -- <tool-args>
 firm-ai install <repo/url>
 firm-ai uninstall <tool-or-package>
+firm-ai upgrade <tool-or-package-or-url>
+firm-ai upgrade-self
 ```
 
 If a tool does not need `--`, you can omit it. Any remaining arguments are passed to the tool.

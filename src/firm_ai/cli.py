@@ -26,6 +26,8 @@ def _build_parser() -> argparse.ArgumentParser:
             "  firm-ai run hello -- --name \"Ada\"\n"
             "  firm-ai install git+https://github.com/org/firm-ai-hello@v0.0.1\n"
             "  firm-ai uninstall firm-ai-hello\n"
+            "  firm-ai upgrade git+https://github.com/org/firm-ai-hello@v0.0.2\n"
+            "  firm-ai upgrade-self\n"
         ),
     )
     subparsers = parser.add_subparsers(dest="command", required=True)
@@ -45,6 +47,13 @@ def _build_parser() -> argparse.ArgumentParser:
         "uninstall", help="Uninstall a tool package from the wrapper environment"
     )
     uninstall_parser.add_argument("name", help="Tool name or package name")
+
+    upgrade_parser = subparsers.add_parser(
+        "upgrade", help="Upgrade an installed tool package"
+    )
+    upgrade_parser.add_argument("spec", help="Tool name, package name, or repo URL")
+
+    subparsers.add_parser("upgrade-self", help="Upgrade the firm-ai wrapper package")
 
     subparsers.add_parser("help", help="Show help and usage examples")
 
@@ -119,6 +128,28 @@ def _cmd_uninstall(name: str) -> int:
     return 0
 
 
+def _cmd_upgrade(spec: str) -> int:
+    resolved_name = None
+    if not _is_vcs_or_url(spec):
+        resolved_name, errors = resolve_tool_distribution(spec)
+        _print_errors(errors)
+        if resolved_name:
+            spec = resolved_name
+    if _normalize_name(spec) == _normalize_name(WRAPPER_PACKAGE):
+        sys.stderr.write(
+            "[firm-ai] refusing to upgrade the wrapper via tool upgrade. "
+            "Use 'firm-ai upgrade-self'.\n"
+        )
+        return 2
+    cmd = _pipx_cmd() + ["runpip", "firm-ai", "install", "--upgrade", spec]
+    return _run_pipx(cmd, action="runpip install --upgrade")
+
+
+def _cmd_upgrade_self() -> int:
+    cmd = _pipx_cmd() + ["upgrade", WRAPPER_PACKAGE]
+    return _run_pipx(cmd, action="upgrade")
+
+
 def _pipx_cmd() -> List[str]:
     pipx_path = shutil.which("pipx")
     if pipx_path:
@@ -142,6 +173,10 @@ def _run_pipx(cmd: List[str], *, action: str) -> int:
 
 def _normalize_name(name: str) -> str:
     return name.replace("_", "-").lower()
+
+
+def _is_vcs_or_url(spec: str) -> bool:
+    return spec.startswith(("git+", "http://", "https://"))
 
 
 def _pipx_list_json() -> Optional[Dict[str, object]]:
@@ -230,6 +265,10 @@ def main(argv: Optional[Sequence[str]] = None) -> int:
         return _cmd_install(args.repo)
     if args.command == "uninstall":
         return _cmd_uninstall(args.name)
+    if args.command == "upgrade":
+        return _cmd_upgrade(args.spec)
+    if args.command == "upgrade-self":
+        return _cmd_upgrade_self()
     if args.command == "help":
         parser.print_help()
         return 0
