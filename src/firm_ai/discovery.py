@@ -21,6 +21,12 @@ class ToolLoadError:
         return f"{self.name} ({self.entry_point}): {self.error}"
 
 
+@dataclass(frozen=True)
+class ToolInfo:
+    tool: Tool
+    version: Optional[str]
+
+
 def _resolve_tool(ep: EntryPoint) -> Tool:
     loaded = ep.load()
     if isinstance(loaded, Tool):
@@ -48,6 +54,16 @@ def _iter_entry_points_with_dist() -> Iterable[Tuple[EntryPoint, object]]:
                 yield ep, dist
 
 
+def _dist_version(dist: object) -> Optional[str]:
+    version = getattr(dist, "version", None)
+    if version:
+        return str(version)
+    metadata = getattr(dist, "metadata", None)
+    if metadata:
+        return metadata.get("Version")
+    return None
+
+
 def load_tools() -> Tuple[Dict[str, Tool], Tuple[ToolLoadError, ...]]:
     tools: Dict[str, Tool] = {}
     errors = []
@@ -57,6 +73,26 @@ def load_tools() -> Tuple[Dict[str, Tool], Tuple[ToolLoadError, ...]]:
             if tool.name in tools:
                 raise ValueError(f"Duplicate tool name: {tool.name}")
             tools[tool.name] = tool
+        except Exception as exc:  # pragma: no cover - CLI shows errors
+            errors.append(
+                ToolLoadError(
+                    name=ep.name,
+                    entry_point=str(ep),
+                    error=str(exc),
+                )
+            )
+    return tools, tuple(errors)
+
+
+def load_tools_with_versions() -> Tuple[Dict[str, ToolInfo], Tuple[ToolLoadError, ...]]:
+    tools: Dict[str, ToolInfo] = {}
+    errors = []
+    for ep, dist in _iter_entry_points_with_dist():
+        try:
+            tool = _resolve_tool(ep)
+            if tool.name in tools:
+                raise ValueError(f"Duplicate tool name: {tool.name}")
+            tools[tool.name] = ToolInfo(tool=tool, version=_dist_version(dist))
         except Exception as exc:  # pragma: no cover - CLI shows errors
             errors.append(
                 ToolLoadError(

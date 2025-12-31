@@ -10,7 +10,11 @@ import subprocess
 import sys
 from typing import Dict, List, Optional, Sequence
 
-from firm_ai.discovery import load_tools, resolve_tool_distribution
+from firm_ai.discovery import (
+    load_tools,
+    load_tools_with_versions,
+    resolve_tool_distribution,
+)
 
 WRAPPER_PACKAGE = "firm-ai"
 
@@ -66,7 +70,7 @@ def _print_errors(errors: Sequence[object]) -> None:
 
 
 def _cmd_list() -> int:
-    tools, errors = load_tools()
+    tools, errors = load_tools_with_versions()
     _print_errors(errors)
 
     if not tools:
@@ -74,8 +78,9 @@ def _cmd_list() -> int:
         return 0
 
     for name in sorted(tools.keys()):
-        tool = tools[name]
-        print(f"{tool.name}\t{tool.description}")
+        tool_info = tools[name]
+        version = tool_info.version or "unknown"
+        print(f"{tool_info.tool.name}\t{version}\t{tool_info.tool.description}")
 
     return 0
 

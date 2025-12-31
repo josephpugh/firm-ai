@@ -22,7 +22,7 @@ python -m pipx ensurepath
 Install from GitHub (recommended):
 
 ```bash
-pipx install git+https://github.com/josephpugh/firm-ai@v0.0.3
+pipx install git+https://github.com/josephpugh/firm-ai@v0.0.4
 ```
 
 If you omit the tag, pipx installs the default branch (usually `main`), not the latest tag.
@@ -112,7 +112,7 @@ tool = Tool(
 [project]
 name = "firm-ai-hello"
 version = "0.0.1"
-dependencies = ["firm-ai>=0.0.3"]
+dependencies = ["firm-ai>=0.0.4"]
 
 [project.entry-points."firm_ai.tools"]
 hello = "firm_ai_hello:tool"
