@@ -1,62 +1,95 @@
 # firm-ai
 
-A stable wrapper CLI that discovers and runs tools published as separate Python packages via entry points.
+A simple wrapper CLI that discovers and runs tools published as separate Python packages via entry points.
 
-## Install (recommended with pipx)
+## User Guide (install and use)
+
+### What you need
+
+- A terminal
+- Python 3.9+
+- `pipx` (recommended, installs apps cleanly)
+
+If you do not have `pipx`, ask IT or run:
 
 ```bash
-pipx install -e .
+python -m pip install --user pipx
+python -m pipx ensurepath
 ```
 
-Install directly from GitHub:
+### Install firm-ai
+
+Install from GitHub (recommended):
 
 ```bash
-pipx install git+https://github.com/josephpugh/firm-ai@v0.0.2
+pipx install git+https://github.com/josephpugh/firm-ai@v0.0.3
 ```
 
 If you omit the tag, pipx installs the default branch (usually `main`), not the latest tag.
 
-To include Azure OpenAI helpers:
+### Install a tool
+
+Tools are separate repos. Install them into the same environment as the wrapper:
 
 ```bash
-pipx install -e ".[azure]"
+firm-ai install git+https://github.com/josephpugh/firm-ai-hello@v0.0.2
 ```
 
-## Usage
+### List tools
 
 ```bash
 firm-ai list
-firm-ai run <tool> -- <tool-args>
-firm-ai install <repo/url>
-firm-ai uninstall <tool-or-package>
-firm-ai upgrade <tool-or-package-or-url>
-firm-ai upgrade-self
+```
+
+### Run a tool
+
+```bash
+firm-ai run hello -- --name "Ada"
 ```
 
 If a tool does not need `--`, you can omit it. Any remaining arguments are passed to the tool.
 
-## Install tools from Enterprise GitHub
-
-Tools are separate repos/packages. Install them into the same environment as the wrapper.
+### Remove a tool
 
 ```bash
-pipx inject firm-ai git+https://github.example.com/org/firm-ai-hello
+firm-ai uninstall hello
 ```
 
-You can also use the wrapper shortcut:
+### Upgrade a tool
 
 ```bash
-firm-ai install git+https://github.example.com/org/firm-ai-hello
+firm-ai upgrade git+https://github.com/josephpugh/firm-ai-hello@v0.0.2
 ```
 
-You can also use a venv and `pip install git+...`.
+### Upgrade the wrapper
 
-## Plugin authoring (tool repo)
+```bash
+firm-ai upgrade-self
+```
 
-Create a normal Python package and expose a `Tool` instance via the `firm_ai.tools` entry point group.
+If you see "command not found", open a new terminal so your PATH updates.
+
+## Developer Guide (build and publish a plugin)
+
+### 1) Create a plugin package
+
+Your tool is a normal Python package that depends on `firm-ai` and exposes a `Tool` via the
+`firm_ai.tools` entry point group.
+
+Minimal structure:
+
+```
+firm-ai-hello/
+  pyproject.toml
+  src/
+    firm_ai_hello/
+      __init__.py
+```
+
+### 2) Implement a Tool
 
 ```python
-# firm_ai_hello/__init__.py
+# src/firm_ai_hello/__init__.py
 from firm_ai.plugin import Tool
 
 
@@ -72,17 +105,53 @@ tool = Tool(
 )
 ```
 
+### 3) Register the entry point
+
 ```toml
 # pyproject.toml
+[project]
+name = "firm-ai-hello"
+version = "0.0.1"
+dependencies = ["firm-ai>=0.0.3"]
+
 [project.entry-points."firm_ai.tools"]
 hello = "firm_ai_hello:tool"
 ```
 
-## Common utilities for plugins
+### 4) Test locally
 
-The wrapper exposes shared utilities under `firm_ai` that plugins can import, such as:
+Install your plugin into the same pipx environment:
+
+```bash
+pipx inject firm-ai -e /path/to/firm-ai-hello
+firm-ai list
+firm-ai run hello
+```
+
+### 5) Publish
+
+Push your repo and tag a release:
+
+```bash
+git tag -a v0.0.1 -m "v0.0.1"
+git push --tags
+```
+
+Then users can install it:
+
+```bash
+firm-ai install git+https://github.com/your-org/firm-ai-hello@v0.0.1
+```
+
+### Shared helpers (optional)
+
+Plugins can reuse common helpers from the wrapper:
 
 - `firm_ai.azure.get_bearer_token`
 - `firm_ai.azure.get_azure_openai_client`
 
-These helpers are intentionally lightweight and optional, so plugins only pay for dependencies they use.
+If your plugin needs Azure helpers, depend on the optional extra:
+
+```toml
+dependencies = ["firm-ai[azure]>=0.0.3"]
+```
